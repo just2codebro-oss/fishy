@@ -18,7 +18,7 @@ Go to:
 
 GitHub → Actions tab
 
-if not image is pushed to docker:- {
+if image not is pushed to docker:- {
 
 docker build -t username/python-app:latest .
 
