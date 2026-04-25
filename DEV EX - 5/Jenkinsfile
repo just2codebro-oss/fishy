@@ -1,48 +1,38 @@
 pipeline {
     agent any
-
+    environment {
+        IMAGE_NAME      = "myapp"
+        DOCKER_HUB_USER = "<username>" //change
+    }
     stages {
-
-        stage('Create Flask App') {
+        stage('Clone') {
             steps {
-                sh '''
-                echo "from flask import Flask
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return 'Hello from Jenkins Web App 🚀'
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002)
-" > app.py
-
-                echo "flask" > requirements.txt
-                '''
+                git branch: 'main',
+                    url: 'https://github.com/<username>/flask-app.git' //change
             }
         }
-
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
-                sh '''
-                echo "FROM python:3.9-slim
-WORKDIR /app
-COPY . .
-RUN pip install flask
-EXPOSE 5000
-CMD [\\"python\\", \\"app.py\\"]" > Dockerfile
-
-                docker build -t flask-demo .
-                '''
+                sh 'docker build -t $DOCKER_HUB_USER/$IMAGE_NAME:latest .'
             }
         }
-
-        stage('Run Container') {
+        stage('Push to Hub') {
             steps {
-                sh '''
-                docker rm -f flask-container || true
-                docker run -d -p 5000:5002 --name flask-container flask-demo
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                      echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                      docker push $DOCKER_HUB_USER/$IMAGE_NAME:latest
+                    '''
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'docker run -d -p 5200:5000 $DOCKER_HUB_USER/$IMAGE_NAME:latest'
             }
         }
     }
