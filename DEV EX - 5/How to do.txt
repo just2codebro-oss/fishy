@@ -1,91 +1,23 @@
-create new repo for this ex
+push the repo to git hub
 
-git add .
+docker run -d --name jenkins -p 8080:8080 -p 5000:5000 -v /var/run/docker.sock:/var/run/docker.sock jenkins/jenkins:lts
 
-git commit -m "jenkins"
+docker exec -u 0 -it jenkins bash
 
-git remote add origin (repo link)
+apt update
+apt install -y docker.io
 
-git push origin main
+usermod -aG docker jenkins
 
-or 
-
-git pull origin main --allow-unrelated-histories
-
-git pull origin main
-
-docker volume create jenkins-data
-
-docker run -d --name jenkins -p 8080:8080 -p 50000:50000 -v jenkins-data:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock jenkins/jenkins:lts
-
-docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
-
-
-
-if not
-
-docker rm -f jenkins
-
-docker volume rm jenkins-data
-
-docker start jenkins
-
-docker ps
-
-docker exec -u root jenkins bash -c "apt-get update && apt-get install -y docker.io"
-
-docker ps -a
-
-docker exec -u root jenkins chmod 666 /var/run/docker.sock
+chmod 666 /var/run/docker.sock
 
 docker restart jenkins
 
-Then Open: http://localhost:8080
 
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+login to jenkins
 
-
-To add credentials
-
-open jenkins
-
-Manage Jenkins
-
-Credentials
-
-(System) → Global credentials (unrestricted)
-
-Add Credentials
-
-fill the details
-
-Username - urk23cs1262
-
-Password - Docker Hub Access Token
-
-ID - dockerhub-creds
-
-Description - Docker Hub login
-
-click Create
-
-
-
-Click New Item
-
-Enter name (example: docker-pipeline)
-
-Select Pipeline
-
-Click OK
-
-In Pipeline section:
-
-Choose: Pipeline script (easy method)
-
-Paste your code (the one you prepared)
-
-Click Save
-
-click Build Now
-
-open http://localhost:5000
+1. New item -> enter name and select pipeline
+2. Pipeline section → Pipeline script from SCM → Git → enter repo URL
+3. Manage Jenkins → Credentials → Add Docker Hub credentials with ID "dockerhub-creds"
+4. Click Build Now
